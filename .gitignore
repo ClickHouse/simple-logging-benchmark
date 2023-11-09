@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 **/snowflake_temp*
 **/clickhouse_temp*
+.idea**
