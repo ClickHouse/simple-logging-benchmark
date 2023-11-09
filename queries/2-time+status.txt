@@ -1,0 +1,7 @@
+SELECT toStartOfInterval(toDateTime(time_local), INTERVAL 5 second) as time, count() FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404 GROUP BY time ORDER BY time ASC LIMIT 10000
+SELECT toStartOfInterval(toDateTime(time_local), INTERVAL 5 second) as time, status::String, count() as c FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404 GROUP BY time, status ORDER BY time ASC LIMIT 100000
+SELECT uniq(remote_addr) as `unique ips` FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404
+SELECT request_path, count() c FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404 GROUP BY request_path ORDER BY c DESC LIMIT 5
+SELECT remote_addr, count() c FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404 GROUP BY remote_addr ORDER BY c DESC LIMIT 5
+SELECT toStartOfInterval(toDateTime(time_local), INTERVAL 5 second) as time, avg(runtime) as avg_request_time, quantile(0.99)(runtime) as 99_runtime FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404 GROUP BY time ORDER BY time ASC LIMIT 100000
+SELECT sum(size) size, request_type FROM logs WHERE time_local >= '1550944800' AND time_local <= '1550966400' AND status=404 GROUP BY request_type ORDER BY size DESC LIMIT 3
