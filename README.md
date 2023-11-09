@@ -182,6 +182,8 @@ export CLICKHOUSE_PASSWORD='password'
 ```
 
 
+As shown, the script runs every query 3x. This can be used to determine a hot, cold and average performance.
+
 ## Results
 
 Full results can be found [here](./results/)
