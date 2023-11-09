@@ -39,7 +39,7 @@ This dashboard is subjected to a series of user drill-downs, replicating a user 
 
 While these behaviors are artificial with no specific event identified, they aim to replicate typical usage patterns of a centralized logging solution by an SRE. 
 
-The full queries for each step can be found [here](./queries/). Each file represents the queries issued at each step.
+The full queries for each step can be found [here](./queries/). Each file represents the queries issued at each step and contains the queries for the whole dashboard.
 
 ## Limitations
 
@@ -72,10 +72,33 @@ We have replicated this data to cover a 30 day period. While this duplicates the
 
 ![data cycle](./cyclic_pattern.png)
 
+This month's data consists of 66 million rows and 20GiB of raw CSV/log data. 
+
 ### Duplicating data
 
-In order to test performance on large datasets, we provide a script [duplicate_data.py](./duplicate_data.py) to duplicate this data.
+In order to replicate this data for larger tests, and preserve its data properties, we use a simple technique. Rather than simply duplicate data, we merge the existing data with a copy whose order has been randomized. This involves a [simple script](./duplicate_data.py) which iterates through the both authoritative and randomized file line by line. Lines from the randomized file and authoritative file are in turn copied into a target file. Both “paired lines” are assigned the date from the authoritative file. This ensures the cyclic pattern shown above is preserved. This is in contrast to simply duplicating lines which would cause duplicate lines to be placed next to each other. This would benefit compression and provide an unfair comparison - worsening as we duplicated the data. Below we show the same data duplicated using the above technique for 133 million, 534 million and a billion log lines.
 
+![Cyclic logs over time](./logs_over_time.png)
+
+```bash
+usage: duplicate_data.py [-h] [--duplication_factor DUPLICATION_FACTOR] source blend_file target
+
+Duplicate the contents of a source file to a target file.
+
+positional arguments:
+  source                Path to the source file
+  blend_file            Path to the blend_file file
+  target                Path to the target file
+
+options:
+  -h, --help            show this help message and exit
+  --duplication_factor DUPLICATION_FACTOR
+                        Duplication factor
+```
+
+A duplication factor of `2` would double the size of the file.
+
+Users can run this script if interested. Alternatively example datasets of various size are provided for download below. 
 
 ### Public datasets
 
@@ -92,20 +115,22 @@ An ordered sample dataset can be downloaded [here](https://datasets-documentatio
 
 ## Schema
 
+The following schema is used for ClickHouse. While this schema could be further optimized.
+
 ```sql
 CREATE TABLE logs
 (
-  `remote_addr` String,
-  `remote_user` String,
-  `runtime` UInt64,
-  `time_local` DateTime,
-  `request_type` String,
-  `request_path` String,
-  `request_protocol` String,
-  `status` UInt64,
-  `size` UInt64,
-  `referer` String,
-  `user_agent` String
+    `remote_addr` IPv4,
+    `remote_user` LowCardinality(String),
+    `runtime` UInt16,
+    `time_local` DateTime,
+    `request_type` LowCardinality(String),
+    `request_path` String,
+    `request_protocol` LowCardinality(String),
+    `status` UInt16,
+    `size` UInt32,
+    `referer` String,
+    `user_agent` String
 )
 ENGINE = MergeTree
 ORDER BY (toStartOfHour(time_local), status, request_path, remote_addr)
@@ -113,3 +138,57 @@ ORDER BY (toStartOfHour(time_local), status, request_path, remote_addr)
 
 ## Loading data
 
+Users can load data using a simple `INSERT INTO SELECT` from the `clickhouse-client` as shown below.
+
+```bash
+wget https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-66.csv.gz
+
+INSERT INTO logs FROM INFILE 'data-66.csv.gz' FORMAT CSVWithNames
+```
+
+## Compression
+
+Compression can be evaluated with the following query:
+
+```sql
+SELECT
+	table,
+	formatReadableQuantity(sum(rows)) AS total_rows,
+	formatReadableSize(sum(data_compressed_bytes)) AS compressed_size,
+	formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed_size,
+	round(sum(data_uncompressed_bytes) / sum(data_compressed_bytes), 2) AS ratio
+FROM system.parts
+WHERE (table LIKE 'logs%') AND active
+GROUP BY table
+ORDER BY sum(rows) ASC
+
+┌─table─────┬─total_rows─────┬─compressed_size─┬─uncompressed_size─┬─ratio─┐
+│ logs_66   │ 66.75 million  │ 1.27 GiB    	   │ 18.98 GiB     	   │ 14.93 │
+│ logs_133  │ 133.49 million │ 2.67 GiB    	   │ 37.96 GiB     	   │ 14.21 │
+│ logs_267  │ 266.99 million │ 5.42 GiB    	   │ 75.92 GiB     	   │	14 │
+│ logs_534  │ 533.98 million │ 10.68 GiB   	   │ 151.84 GiB    	   │ 14.22 │
+│ logs_1068 │ 1.07 billion   │ 20.73 GiB   	   │ 303.67 GiB    	   │ 14.65 │
+│ logs_5340 │ 5.34 billion   │ 93.24 GiB   	   │ 1.48 TiB      	   │ 16.28 │
+└───────────┴────────────────┴─────────────────┴───────────────────┴───────┘
+```
+
+## Running tests
+
+To run tests the script [`run_queries.sh`](./run_queries.sh) is provided.
+
+This executes the queries in each file [here](./queries/). Each file represents a step in our drill down scenario and contains the queries for the dashboard with the appropriate filters. Files are numbered so as to ensure they execute in order. Queries within files are executed sequentially. See [Limitations](#limitations).
+
+The script requires the environment variables `CLICKHOUSE_HOST`, `CLICKHOUSE_USER` and `CLICKHOUSE_PASSWORD` to set as shown below.
+
+```bash
+export CLICKHOUSE_HOST=pv0bmfecql.europe-west4.gcp.clickhouse.cloud
+export CLICKHOUSE_USER=default
+export CLICKHOUSE_PASSWORD='password'
+
+./run_queries.sh
+```
+
+
+## Results
+
+Full results can be found [here](./results/)

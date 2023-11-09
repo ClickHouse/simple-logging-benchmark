@@ -2,8 +2,7 @@
 
 QUERY_FILES_FOLDER=$1
 if [ -z "$QUERY_FILES_FOLDER" ] ; then
-  echo "folder must be specified"
-  exit 1
+  QUERY_FILES_FOLDER=queries
 fi
 
 PRINT_HEADERS="true"
