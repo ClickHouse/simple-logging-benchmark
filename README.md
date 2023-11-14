@@ -2,11 +2,11 @@
 
 The files in this folder represent a very simple logging benchmark for ClickHouse. This is not intended to be an exhaustive benchmark is only intended to provide an example of the compression rates and query performance that can be achieved when using ClickHouse for log data.
 
-This repository supports the blog [Cost-predictable logging at scale with ClickHouse, Grafana & WarpStream]().
+This repository supports the blog [Cost-predictable logging at scale with ClickHouse, Grafana & WarpStream](https://clickhouse.com/blog/cost-predictable-logging-with-clickhouse-vs-datadog-elastic-stack).
 
 ## Environment
 
-This benchmark was originally performed against a ClickHouse Cloud development service. This can be started for less than $200 per month. 
+This benchmark was originally performed against a [ClickHouse Cloud Development tier service](https://clickhouse.com/pricing). This can be started for less than $200 per month. 
 
 While the results [here](./results) assume the use of a service of this size, this test should be valid against any ClickHouse self-managed installation or Cloud instance. Results will vary in these cases and users may wish to test with [more or less data](#duplicating-data), depending on the specification.
 

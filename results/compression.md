@@ -71,7 +71,6 @@ ENGINE = MergeTree
 ORDER BY (toStartOfHour(time_local), status, request_path, remote_addr)
 ```
 
-
 ```sql
 SELECT
     table,
@@ -88,8 +87,9 @@ ORDER BY sum(rows) ASC
 │ logs_66   │ 66.75 million   │ 1.21 GiB        │ 16.64 GiB         │ 13.76 │
 │ logs_133  │ 133.49 million  │ 2.53 GiB        │ 33.27 GiB         │ 13.14 │
 │ logs_267  │ 266.99 million  │ 5.12 GiB        │ 66.55 GiB         │    13 │
-
-Coming soon...
+│ logs_534  │ 533.98 million  │ 10.06 GiB       │ 133.09 GiB        │ 13.23 │
+│ logs_1068 │ 1.07 billion    │ 19.56 GiB       │ 266.19 GiB        │ 13.61 │
+└───────────┴─────────────────┴─────────────────┴───────────────────┴───────┘
 ```
 
 Note further optimizations may be possible with [codecs](https://clickhouse.com/blog/optimize-clickhouse-codecs-compression-schema). Contributions welcome.
