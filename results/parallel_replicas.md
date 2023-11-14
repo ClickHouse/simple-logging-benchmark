@@ -2,18 +2,32 @@
 
 This following shows the impact of parallel replicas on performance.
 
-All results assume the use of a ClickHouse Cloud development instance.
+All results assume the use of a ClickHouse Cloud Development tier service.
 
+All tests on 5.34billion rows or 1.48TiB of data.
 
 ### Without parallel replicas
 
+|            **User Action**            |                       **Filter**                      |   | simple count over time | count by status over time | unique count of remote_addr | request_path by count | remote_addr by count (avg) | average and 99th percentile response time transfered over time | total bytes transfered by request_type |
+|:--------------------------------------:|:-----------------------------------------------------:|---|:----------------------:|:-------------------------:|:---------------------------:|:---------------------:|:--------------------------:|:--------------------------------------------------------------:|:--------------------------------------:|
+|                                        |                                                       |   |                        |                           |                             |                       |                            |                                                                |                                        |
+|              Open Grafana              |                         time                          |   |    1.652,1.239,0.811   |     1.388,2.097,2.237     |      1.620,1.236,2.975      |   4.969,2.600,2.244   |      4.906,1.730,3.246     |                        3.812,2.219,3.683                       |            0.959,0.708,0.887           |
+|           Looking for errors           |                     time + status                     |   |    0.210,0.283,0.142   |     0.111,0.190,0.174     |      0.203,0.247,0.130      |   0.373,0.138,0.257   |      0.217,0.139,0.160     |                        0.178,0.222,0.180                       |            0.167,0.150,0.259           |
+|          Isolating the errors          |              time + status + request_path             |   |    0.533,0.248,0.262   |     0.442,0.513,0.256     |      0.491,0.488,0.561      |   0.495,0.304,0.264   |      0.255,0.584,0.489     |                        0.528,0.437,0.281                       |            0.590,0.552,0.256           |
+|        Isolating impacted users        |       time + status + request_path + remote_addr      |   |    0.093,0.100,0.100   |     0.218,0.095,0.156     |      0.161,0.220,0.163      |   0.154,0.160,0.099   |      0.149,0.139,0.151     |                        0.101,0.159,0.126                       |            0.097,0.106,0.098           |
+|          Evaluating SLA breach         | time + status + request_path + remote_addr  + runtime |   |    0.102,0.098,0.093   |     0.098,0.185,0.101     |      0.134,0.094,0.092      |   0.100,0.108,0.108   |      0.183,0.188,0.109     |                        0.192,0.113,0.200                       |            0.254,0.112,0.190           |
+| Zoom Out to check for similar patterns |     status + request_path + remote_addr  + runtime    |   |  93.196,32.156,32.023  |    30.828,31.777,31.434   |     30.775,72.786,17.219    |  15.288,30.563,15.390 |    15.107,15.081,15.243    |                      30.492,15.046,30.335                      |          36.889,17.338,15.379          |
 
-```bash
 
-
-
-
-```
+|            **User Action**            |                       **Filter**                      |   | simple count over time | count by status over time | unique count of remote_addr | request_path by count | remote_addr by count (avg) | average and 99th percentile response time transfered over time | total bytes transfered by request_type |
+|:--------------------------------------:|:-----------------------------------------------------:|---|:----------------------:|:-------------------------:|:---------------------------:|:---------------------:|:--------------------------:|:--------------------------------------------------------------:|:--------------------------------------:|
+|                                        |                                                       |   |                        |                           |                             |                       |                            |                                                                |                                        |
+|              Open Grafana              |                         time                          |   |          1.23          |            1.91           |             1.94            |          3.27         |            3.29            |                              3.24                              |                  0.85                  |
+|           Looking for errors           |                     time + status                     |   |          0.21          |            0.16           |             0.19            |          0.26         |            0.17            |                              0.19                              |                  0.19                  |
+|          Isolating the errors          |              time + status + request_path             |   |          0.35          |            0.4            |             0.51            |          0.35         |            0.44            |                              0.42                              |                  0.47                  |
+|        Isolating impacted users        |       time + status + request_path + remote_addr      |   |           0.1          |            0.16           |             0.18            |          0.14         |            0.15            |                              0.13                              |                   0.1                  |
+|          Evaluating SLA breach         | time + status + request_path + remote_addr  + runtime |   |           0.1          |            0.13           |             0.11            |          0.11         |            0.16            |                              0.17                              |                  0.19                  |
+| Zoom Out to check for similar patterns |     status + request_path + remote_addr  + runtime    |   |          52.46         |           31.35           |            40.26            |         20.41         |            15.14           |                              25.29                             |                  23.2                  |
 
 
 ## With parallel replicas
@@ -21,12 +35,29 @@ All results assume the use of a ClickHouse Cloud development instance.
 The following settings are required to enable parallel replicas.
 
 ```bash
-export CLICKHOUSE_SETTINGS="use_hedged_requests = 0, allow_experimental_parallel_reading_from_replicas = 1, max_parallel_replicas = 100, parallel_replicas_single_task_marks_count_multiplier = 2;"
+export CLICKHOUSE_SETTINGS="use_hedged_requests=0, allow_experimental_parallel_reading_from_replicas=1, max_parallel_replicas=100, parallel_replicas_single_task_marks_count_multiplier=2;"
 ```
 
 Full results are shown beloiw.
 
-```bash
+|            **User Action**            |                       **Filter**                      |   | simple count over time | count by status over time | unique count of remote_addr | request_path by count | remote_addr by count (avg) | average and 99th percentile response time transfered over time | total bytes transfered by request_type |
+|:--------------------------------------:|:-----------------------------------------------------:|---|:----------------------:|:-------------------------:|:---------------------------:|:---------------------:|:--------------------------:|:--------------------------------------------------------------:|:--------------------------------------:|
+|                                        |                                                       |   |                        |                           |                             |                       |                            |                                                                |                                        |
+|              Open Grafana              |                         time                          |   |    1.870,0.416,0.362   |     1.463,0.798,0.782     |      2.355,1.468,1.297      |   4.106,3.708,3.218   |      1.441,1.704,1.300     |                        4.082,3.878,2.159                       |            1.200,0.591,0.585           |
+|           Looking for errors           |                     time + status                     |   |    0.087,0.094,0.085   |     0.080,0.111,0.113     |      0.096,0.094,0.110      |   0.129,0.170,0.406   |      0.176,0.268,0.098     |                        0.208,0.233,0.282                       |            0.107,0.192,0.127           |
+|          Isolating the errors          |              time + status + request_path             |   |    0.282,0.284,0.437   |     0.281,0.273,0.269     |      0.281,0.277,0.290      |   0.273,0.269,0.416   |      0.482,0.292,0.275     |                        0.308,0.735,0.338                       |            0.306,0.287,0.328           |
+|        Isolating impacted users        |       time + status + request_path + remote_addr      |   |    0.932,0.545,0.529   |     0.562,0.524,0.553     |      0.550,0.567,0.541      |   0.516,0.523,0.518   |      0.544,0.593,0.519     |                        0.544,0.562,0.972                       |            0.537,0.524,0.507           |
+|          Evaluating SLA breach         | time + status + request_path + remote_addr  + runtime |   |    0.538,0.518,0.797   |     0.516,0.520,0.524     |      0.542,0.542,0.835      |   0.523,0.524,0.520   |      0.565,0.508,0.530     |                        0.538,0.564,0.559                       |            0.514,0.520,0.543           |
+| Zoom Out to check for similar patterns |     status + request_path + remote_addr  + runtime    |   |  35.502,23.849,15.039  |    11.442,9.997,10.983    |      9.578,13.830,9.117     |   9.634,10.041,9.533  |     8.737,10.316,10.182    |                        8.765,9.320,9.842                       |           10.925,8.789,6.949           |
 
 
-```
+|            **User Action**            |                       **Filter**                      |   | simple count over time | count by status over time | unique count of remote_addr | request_path by count | remote_addr by count (avg) | average and 99th percentile response time transfered over time | total bytes transfered by request_type |
+|:--------------------------------------:|:-----------------------------------------------------:|---|:----------------------:|:-------------------------:|:---------------------------:|:---------------------:|:--------------------------:|:--------------------------------------------------------------:|:--------------------------------------:|
+|                                        |                                                       |   |                        |                           |                             |                       |                            |                                                                |                                        |
+|              Open Grafana              |                         time                          |   |          0.88          |            1.01           |             1.71            |          3.68         |            1.48            |                              3.37                              |                  0.79                  |
+|           Looking for errors           |                     time + status                     |   |          0.09          |            0.1            |             0.1             |          0.24         |            0.18            |                              0.24                              |                  0.14                  |
+|          Isolating the errors          |              time + status + request_path             |   |          0.33          |            0.27           |             0.28            |          0.32         |            0.35            |                              0.46                              |                  0.31                  |
+|        Isolating impacted users        |       time + status + request_path + remote_addr      |   |          0.67          |            0.55           |             0.55            |          0.52         |            0.55            |                              0.69                              |                  0.52                  |
+|          Evaluating SLA breach         | time + status + request_path + remote_addr  + runtime |   |          0.62          |            0.52           |             0.64            |          0.52         |            0.53            |                              0.55                              |                  0.53                  |
+| Zoom Out to check for similar patterns |     status + request_path + remote_addr  + runtime    |   |          24.8          |           10.81           |            10.84            |          9.74         |            9.75            |                              9.31                              |                  8.89                  |
+

@@ -104,12 +104,12 @@ Users can run this script if interested. Alternatively example datasets of vario
 
 Sample datasets of various sizes are available in CSV format (rows, uncompressed size, compressed size) covering the period of 30 days:
 
-- [66m,20GB,1.9GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-66.csv.gz)
+- [66m,19GB,1.9GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-66.csv.gz)
 - [133m,38GB,4.2GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-133.csv.gz)
 - [267m,76GB,8.2GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-267.csv.gz)
 - [534m,152GB,16.1GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-534.csv.gz)
 - [1064m,304GB,31.6GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-1064.csv.gz)
-- [52804m,304GB,260.7GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-5280.csv.gz)
+- [5340m,1.48TiB,260.7GB](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/data-5280.csv.gz)
 
 An ordered sample dataset can be downloaded [here](https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/logs-534.csv.gz) containing 534m rows.
 
@@ -186,4 +186,10 @@ As shown, the script runs every query 3x. This can be used to determine a hot, c
 
 ## Results
 
-Full results can be found [here](./results/)
+Full results can be found [here](./results/).
+
+[Query results](./results/query_performance.md)
+
+[Compression results](./results/compression.md)
+
+[Parallel Replica results](./results/parallel_replicas.md)
